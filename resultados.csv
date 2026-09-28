@@ -1,0 +1,4 @@
+instancia,dificuldade,vertices,arestas,cores_oferecidas_K,variaveis,restricoes,relaxacao_linear,limite_inferior,cores_encontradas,chi_literatura,status,gap_%,nos_bb,tempo_s
+myciel3,Fácil,11,20,4,48,94,2.0,4.0,4,4,Ótimo,0.0,93,0.08
+myciel4,Média,23,71,5,120,382,2.0,5.0,5,5,Ótimo,0.0,21990,12.03
+myciel5,Difícil,47,236,6,288,1468,2.0,4.0,6,6,Limite de tempo,33.33,157269,300.03

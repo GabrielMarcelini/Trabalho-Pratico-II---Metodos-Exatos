@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coloração de Grafos — TP-II</title>
+<style>
+  :root {
+    --bg: #0f1420;
+    --panel: #171e2e;
+    --line: #2a3448;
+    --text: #e8ecf4;
+    --muted: #93a0b8;
+    --accent: #7aa2ff;
+    --c0: #ff6b6b; --c1: #4dabf7; --c2: #51cf66; --c3: #fcc419; --c4: #cc5de8; --c5: #ff922b; --c6: #20c997;
+    --ok: #51cf66; --warn: #ff922b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; overflow: hidden; }
+
+  .deck { position: fixed; inset: 0; display: grid; place-items: center; }
+  .slide {
+    position: absolute; width: 1280px; height: 720px; padding: 64px 80px;
+    display: none; flex-direction: column; transform-origin: center center;
+  }
+  .slide.active { display: flex; animation: fade .35s ease; }
+  @keyframes fade { from { opacity: 0; transform: var(--scale) translateY(8px); } to { opacity: 1; transform: var(--scale); } }
+
+  .tag { font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 14px; }
+  h1 { font-size: 64px; line-height: 1.05; font-weight: 700; }
+  h2 { font-size: 44px; font-weight: 700; margin-bottom: 28px; }
+  p, li { font-size: 26px; line-height: 1.5; color: var(--text); }
+  .muted { color: var(--muted); }
+  ul { list-style: none; }
+  ul li { padding-left: 28px; position: relative; margin-bottom: 14px; }
+  ul li::before { content: ""; position: absolute; left: 0; top: 15px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+  b, strong { color: #fff; }
+  .hl { color: var(--accent); font-weight: 600; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; flex: 1; align-items: center; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 24px 28px; }
+
+  .presenter { position: absolute; top: 28px; right: 40px; font-size: 14px; color: var(--muted);
+    border: 1px solid var(--line); padding: 6px 14px; border-radius: 999px; }
+  .num { position: absolute; bottom: 26px; right: 40px; font-size: 14px; color: var(--muted); }
+
+  /* capa */
+  .cover { justify-content: center; }
+  .cover .sub { font-size: 28px; color: var(--muted); margin-top: 18px; }
+  .cover .team { margin-top: 56px; display: flex; gap: 16px; }
+  .cover .team span { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 22px; font-size: 20px; }
+  .dots { display: flex; gap: 10px; margin-bottom: 36px; }
+  .dots i { width: 22px; height: 22px; border-radius: 50%; display: block; }
+
+  /* fórmulas */
+  .math { font-family: "Cambria Math", "Times New Roman", serif; font-size: 30px; line-height: 1.9; }
+  .math .lbl { font-family: "Segoe UI", system-ui, sans-serif; font-size: 18px; color: var(--muted); margin-left: 18px; }
+  .math sub { font-size: .65em; }
+
+  /* código */
+  pre { background: #0b0f18; border: 1px solid var(--line); border-radius: 14px; padding: 22px 26px;
+    font-family: "Cascadia Code", Consolas, monospace; font-size: 18px; line-height: 1.45; color: #cfd8e8; overflow: hidden; }
+  .k { color: #c792ea; } .f { color: #82aaff; } .s { color: #c3e88d; } .c { color: #637089; font-style: italic; } .n { color: #f78c6c; }
+
+  /* tabela */
+  table { width: 100%; border-collapse: collapse; font-size: 22px; }
+  th, td { padding: 13px 16px; text-align: center; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 16px; text-transform: uppercase; letter-spacing: .06em; }
+  td:first-child, th:first-child { text-align: left; }
+  .pill { display: inline-block; padding: 3px 12px; border-radius: 999px; font-size: 17px; font-weight: 600; }
+  .pill.ok { background: rgba(81,207,102,.15); color: var(--ok); }
+  .pill.warn { background: rgba(255,146,43,.15); color: var(--warn); }
+  .easy { color: var(--ok); } .mid { color: var(--c3); } .hard { color: var(--c0); }
+
+  /* barras */
+  .bars { display: flex; flex-direction: column; gap: 18px; }
+  .bar-row { display: grid; grid-template-columns: 110px 1fr 150px; align-items: center; gap: 16px; font-size: 20px; }
+  .bar-track { height: 30px; background: #0b0f18; border-radius: 8px; overflow: hidden; }
+  .bar { height: 100%; border-radius: 8px; }
+  .bar-val { font-variant-numeric: tabular-nums; color: var(--muted); }
+
+  .big { font-size: 88px; font-weight: 800; line-height: 1; }
+  .kpi { text-align: center; }
+  .kpi .lbl { font-size: 18px; color: var(--muted); margin-top: 8px; }
+
+  /* notas do apresentador */
+  .notes { display: none; position: fixed; left: 0; right: 0; bottom: 0; background: rgba(8,10,16,.96);
+    border-top: 1px solid var(--line); padding: 16px 32px; font-size: 17px; color: #cfd8e8; line-height: 1.5; max-height: 32vh; overflow: auto; z-index: 10; }
+  body.show-notes .notes { display: block; }
+  .help { position: fixed; bottom: 10px; left: 16px; font-size: 12px; color: #4b5870; z-index: 5; }
+  .progress { position: fixed; top: 0; left: 0; height: 3px; background: var(--accent); transition: width .3s; z-index: 5; }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<!-- ============ INTEGRANTE 1: O PROBLEMA ============ -->
+
+<section class="slide cover" data-presenter="Integrante 1"
+  data-notes="(~20s) Boa noite! Nosso grupo escolheu o Problema de Coloração de Grafos. Vou apresentar o problema, o [Integrante 2] mostra o modelo e o código, e o [Integrante 3] traz os resultados.">
+  <div class="dots"><i style="background:var(--c0)"></i><i style="background:var(--c1)"></i><i style="background:var(--c2)"></i><i style="background:var(--c3)"></i></div>
+  <div class="tag">TP-II · Programação Linear Inteira · Métodos Exatos</div>
+  <h1>Problema de Coloração<br>de Grafos</h1>
+  <div class="sub">Modelagem em Python (PuLP) e resolução exata com o solver HiGHS</div>
+  <div class="team"><span>Integrante 1</span><span>Integrante 2</span><span>Integrante 3</span></div>
+</section>
+
+<section class="slide" data-presenter="Integrante 1"
+  data-notes="(~50s) Temos um grafo: vértices ligados por arestas. Queremos pintar cada vértice com uma cor de forma que dois vértices ligados NUNCA tenham a mesma cor. E queremos usar o MENOR número de cores possível. Esse número mínimo tem nome: número cromático, χ(G). O grafo ao lado é a nossa instância fácil, e ela precisa de 4 cores — essa coloração foi a que o nosso modelo encontrou.">
+  <div class="tag">1 · O problema</div>
+  <h2>O que é colorir um grafo?</h2>
+  <div class="cols">
+    <div>
+      <ul>
+        <li>Dado um grafo <b>G = (V, E)</b></li>
+        <li>Pintar cada <b>vértice</b> com uma cor</li>
+        <li>Vértices <b>vizinhos</b> não podem ter a mesma cor</li>
+        <li>Objetivo: usar o <span class="hl">menor número de cores</span></li>
+      </ul>
+      <div class="card" style="margin-top:22px">
+        <p style="font-size:22px">Esse mínimo é o <b>número cromático χ(G)</b>.</p>
+      </div>
+    </div>
+    <div style="display:grid;place-items:center">
+      <svg id="grafo" viewBox="0 0 420 420" width="440" height="440"></svg>
+      <p class="muted" style="font-size:17px;margin-top:-6px">myciel3: 11 vértices, 20 arestas, χ = 4</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-presenter="Integrante 1"
+  data-notes="(~50s) Onde isso aparece? Montar horário de provas sem choque (cada prova é um vértice, provas com alunos em comum são ligadas, e cada cor é um horário). Também alocação de registradores em compiladores, frequências de rádio e o próprio Sudoku. O ponto importante para o trabalho: decidir se um grafo pode ser colorido com k cores é NP-completo para k ≥ 3 — é um dos 21 problemas de Karp. Então a versão de otimização é NP-difícil, e não existe algoritmo polinomial conhecido.">
+  <div class="tag">1 · O problema</div>
+  <h2>Por que é importante — e difícil?</h2>
+  <div class="cols">
+    <div class="card">
+      <p class="hl" style="margin-bottom:12px">Aplicações</p>
+      <ul>
+        <li>Horário de provas sem choque</li>
+        <li>Registradores em compiladores</li>
+        <li>Frequências de rádio / antenas</li>
+        <li>Sudoku (coloração com 9 cores)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <p class="hl" style="margin-bottom:12px">Complexidade</p>
+      <ul>
+        <li>“Dá pra colorir com <b>k</b> cores?” é <b>NP-completo</b> para k ≥ 3 (Karp, 1972)</li>
+        <li>Minimizar cores é <b>NP-difícil</b></li>
+        <li>A relaxação linear <b>não</b> é inteira</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INTEGRANTE 2: MODELO E CÓDIGO ============ -->
+
+<section class="slide" data-presenter="Integrante 2"
+  data-notes="(~60s) Usamos a formulação por atribuição. Duas variáveis binárias: x_vc diz se o vértice v recebeu a cor c; y_c diz se a cor c foi usada. O objetivo é minimizar a soma dos y, ou seja, o número de cores. Restrição 1: cada vértice recebe exatamente uma cor. Restrição 2: para cada aresta e cada cor, as duas pontas não podem ter a mesma cor — e ainda amarra x ao y: só posso usar uma cor que está 'ligada'. Restrição 3 quebra simetria: obriga a usar as cores em ordem, 1, 2, 3..., evitando soluções repetidas. K é quantas cores oferecemos: pegamos da heurística DSATUR, que dá uma coloração boa rapidamente.">
+  <div class="tag">2 · Modelo matemático</div>
+  <h2>Formulação de PLI</h2>
+  <div class="cols" style="grid-template-columns: 1.25fr 1fr; align-items:start">
+    <div class="card math">
+      min &nbsp;Σ<sub>c</sub> y<sub>c</sub> <span class="lbl">nº de cores usadas</span><br>
+      Σ<sub>c</sub> x<sub>vc</sub> = 1 &nbsp;&nbsp;∀ v ∈ V <span class="lbl">(1) uma cor por vértice</span><br>
+      x<sub>uc</sub> + x<sub>vc</sub> ≤ y<sub>c</sub> &nbsp;&nbsp;∀ (u,v) ∈ E, ∀ c <span class="lbl">(2) vizinhos ≠</span><br>
+      y<sub>c</sub> ≥ y<sub>c+1</sub> &nbsp;&nbsp;∀ c <span class="lbl">(3) quebra de simetria</span><br>
+      x<sub>vc</sub>, y<sub>c</sub> ∈ {0, 1}
+    </div>
+    <div>
+      <ul>
+        <li><b>x<sub>vc</sub></b> = 1 se o vértice <b>v</b> recebe a cor <b>c</b></li>
+        <li><b>y<sub>c</sub></b> = 1 se a cor <b>c</b> é usada</li>
+        <li><b>K</b> = cores disponíveis, obtido pela heurística <b>DSATUR</b></li>
+        <li>Tamanho: <b>|V|·K + K</b> variáveis e <b>|E|·K</b> restrições de conflito</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-presenter="Integrante 2"
+  data-notes="(~60s) Esse é o coração do código, em PuLP. Criamos as variáveis binárias, a função objetivo e as três famílias de restrições — é praticamente uma tradução linha a linha do modelo. Depois chamamos o HiGHS, que é um solver open-source que usa branch-and-bound com planos de corte. Colocamos um limite de 300 segundos e coletamos: tempo, número de nós da árvore, limite inferior e gap. O código também lê os arquivos .col da DIMACS e confere se a coloração é válida.">
+  <div class="tag">2 · Código</div>
+  <h2>Modelo em Python (PuLP + HiGHS)</h2>
+  <pre><span class="c"># variáveis binárias</span>
+x = prob.<span class="f">add_variable_dicts</span>(<span class="s">"x"</span>, (V, C), cat=<span class="s">"Binary"</span>)
+y = prob.<span class="f">add_variable_dicts</span>(<span class="s">"y"</span>, C, cat=<span class="s">"Binary"</span>)
+<span class="c"># objetivo: minimizar o nº de cores</span>
+prob += <span class="f">lpSum</span>(y[c] <span class="k">for</span> c <span class="k">in</span> C)
+<span class="c"># (1) cada vértice recebe uma cor</span>
+<span class="k">for</span> v <span class="k">in</span> V:
+    prob += <span class="f">lpSum</span>(x[v][c] <span class="k">for</span> c <span class="k">in</span> C) == <span class="n">1</span>
+<span class="c"># (2) vizinhos não compartilham cor</span>
+<span class="k">for</span> (u, v) <span class="k">in</span> arestas:
+    <span class="k">for</span> c <span class="k">in</span> C:
+        prob += x[u][c] + x[v][c] &lt;= y[c]
+<span class="c"># (3) quebra de simetria</span>
+<span class="k">for</span> c <span class="k">in</span> <span class="f">range</span>(K - <span class="n">1</span>):
+    prob += y[c] &gt;= y[c + <span class="n">1</span>]
+<span class="c"># resolve com branch-and-bound (limite de 300 s)</span>
+prob.<span class="f">solve</span>(pulp.<span class="f">HiGHS</span>(timeLimit=<span class="n">300</span>))</pre>
+</section>
+
+<section class="slide" data-presenter="Integrante 2"
+  data-notes="(~40s) As instâncias vêm do benchmark clássico DIMACS de coloração. Escolhemos a família Mycielski: cada instância é construída a partir da anterior, dobrando o grafo e somando 1 vértice. Assim a dificuldade cresce de forma controlada. O detalhe interessante: esses grafos não têm triângulos, ou seja, a maior clique tem tamanho 2 — mas precisam de 4, 5, 6 cores. Isso engana o solver, como o [Integrante 3] vai mostrar.">
+  <div class="tag">2 · Instâncias</div>
+  <h2>Instâncias DIMACS (família Mycielski)</h2>
+  <table style="margin-bottom:28px">
+    <tr><th>Nível</th><th>Instância</th><th>Vértices</th><th>Arestas</th><th>Variáveis</th><th>Restrições</th><th>χ</th></tr>
+    <tr><td class="easy">Fácil</td><td>myciel3</td><td>11</td><td>20</td><td>48</td><td>94</td><td>4</td></tr>
+    <tr><td class="mid">Média</td><td>myciel4</td><td>23</td><td>71</td><td>120</td><td>382</td><td>5</td></tr>
+    <tr><td class="hard">Difícil</td><td>myciel5</td><td>47</td><td>236</td><td>288</td><td>1.468</td><td>6</td></tr>
+  </table>
+  <ul>
+    <li>Cada nível é gerado a partir do anterior (<b>transformação de Mycielski</b>)</li>
+    <li>Grafos <b>sem triângulos</b>, mas com χ alto → difícil de provar o ótimo</li>
+  </ul>
+</section>
+
+<!-- ============ INTEGRANTE 3: RESULTADOS ============ -->
+
+<section class="slide" data-presenter="Integrante 3"
+  data-notes="(~60s) Aqui estão os resultados, com limite de 300 segundos, no HiGHS. A fácil resolve instantaneamente. A média já precisa de milhares de nós na árvore de branch-and-bound. Na difícil, o solver ENCONTRA a coloração com 6 cores, que é o ótimo conhecido, mas não consegue PROVAR que não existe uma com 5 dentro do limite de tempo — por isso fica com gap. Ou seja: achar uma boa solução é fácil; provar que ela é ótima é o que custa caro.">
+  <div class="tag">3 · Resultados</div>
+  <h2>Comparativo das 3 instâncias</h2>
+  <table>
+    <tr><th>Instância</th><th>Cores</th><th>Limite inf.</th><th>Gap</th><th>Nós B&amp;B</th><th>Tempo</th><th>Status</th></tr>
+    <tr><td><span class="easy">●</span> myciel3</td><td>4</td><td>4</td><td>0%</td><td>93</td><td>0,08 s</td><td><span class="pill ok">Ótimo</span></td></tr>
+    <tr><td><span class="mid">●</span> myciel4</td><td>5</td><td>5</td><td>0%</td><td>21.990</td><td>12,03 s</td><td><span class="pill ok">Ótimo</span></td></tr>
+    <tr><td><span class="hard">●</span> myciel5</td><td>6</td><td>4</td><td>33,3%</td><td>157.269</td><td>300 s</td><td><span class="pill warn">Limite de tempo</span></td></tr>
+  </table>
+  <p class="muted" style="margin-top:26px;font-size:20px">Solver HiGHS · limite de 300 s · cores = melhor solução encontrada · limite inf. = melhor prova do solver</p>
+</section>
+
+<section class="slide" data-presenter="Integrante 3"
+  data-notes="(~40s) Visualmente, em escala logarítmica: cada nível aumenta o tempo e o número de nós em ordens de grandeza, mesmo o grafo sendo pequeno — 47 vértices só! Isso é a explosão combinatória típica de problema NP-difícil.">
+  <div class="tag">3 · Resultados</div>
+  <h2>Crescimento do esforço (escala log)</h2>
+  <div class="cols" style="align-items:start">
+    <div>
+      <p class="hl" style="margin-bottom:18px">Tempo de resolução</p>
+      <div class="bars" id="barsTempo"></div>
+    </div>
+    <div>
+      <p class="hl" style="margin-bottom:18px">Nós explorados (B&amp;B)</p>
+      <div class="bars" id="barsNos"></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-presenter="Integrante 3"
+  data-notes="(~50s) Por que é tão difícil? Dois motivos. Primeiro: a relaxação linear é muito fraca. Se deixamos as variáveis contínuas, o solver 'espalha' cada vértice em meia cor, e o limite inferior dá 2 — sempre! Enquanto a resposta é 6. O branch-and-bound precisa fechar esse buraco sozinho. Segundo: simetria. Trocar as cores de lugar gera a mesma solução; com 6 cores são 720 permutações. A restrição de ordem ajuda, mas não elimina tudo. É por isso que esse problema serve bem ao critério do trabalho: a relaxação não é inteira.">
+  <div class="tag">3 · Análise</div>
+  <h2>Por que a difícil não fecha?</h2>
+  <div class="cols">
+    <div class="card kpi">
+      <div class="big"><span style="color:var(--muted)">2</span> <span style="font-size:48px;color:var(--muted)">vs</span> <span class="hl">6</span></div>
+      <div class="lbl">relaxação linear &nbsp;vs&nbsp; ótimo (myciel5)</div>
+      <p style="font-size:20px;margin-top:20px">Com x<sub>vc</sub> fracionário, cada aresta “divide” as cores e o limite inferior fica em <b>2</b>.</p>
+    </div>
+    <div>
+      <ul>
+        <li><b>Relaxação fraca:</b> o limite inferior começa muito longe do ótimo</li>
+        <li><b>Simetria:</b> trocar cores gera soluções iguais (6! = 720)</li>
+        <li><b>Mycielski</b> não tem triângulos → sem cliques grandes para ajudar a prova</li>
+        <li>Achar a solução é rápido; <span class="hl">provar o ótimo</span> é caro</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-presenter="Integrante 3"
+  data-notes="(~30s) Concluindo: modelamos Coloração de Grafos como PLI, resolvemos com método exato e vimos a dificuldade escalar de forma clara nas 3 instâncias. Como melhorias, dá para usar formulações mais fortes, como a de representantes ou por conjuntos independentes com geração de colunas. Obrigado! Perguntas?">
+  <div class="tag">Conclusão</div>
+  <h2>Resumindo</h2>
+  <ul style="margin-bottom:28px">
+    <li>Coloração de Grafos é <b>NP-difícil</b> e modelável como PLI com variáveis binárias</li>
+    <li>O método exato (B&amp;B do HiGHS) resolve bem grafos pequenos</li>
+    <li>A dificuldade cresce <b>exponencialmente</b>: de 0,08 s para 300 s</li>
+    <li>O gargalo é <span class="hl">provar a otimalidade</span>, não achar a solução</li>
+    <li>Melhorias: formulações mais fortes (representantes, geração de colunas)</li>
+  </ul>
+  <h1 style="font-size:56px">Obrigado! <span class="muted" style="font-weight:400">Perguntas?</span></h1>
+</section>
+
+</div>
+
+<div class="notes" id="notes"></div>
+<div class="help">← → navegar · N notas do apresentador · F tela cheia</div>
+
+<script>
+  // ------- dados reais (gerados por coloracao.py) -------
+  const RES = {"arestas3": [[0, 1], [0, 3], [0, 6], [0, 8], [1, 2], [1, 5], [1, 7], [2, 4], [2, 6], [2, 9], [3, 4], [3, 5], [3, 9], [4, 7], [4, 8], [5, 10], [6, 10], [7, 10], [8, 10], [9, 10]], "coloracao3": [2, 0, 2, 0, 1, 1, 1, 2, 3, 1, 0], "tempos": [0.08, 12.03, 300.03], "nos": [93, 21990, 157269]};
+
+  // ------- grafo myciel3 colorido pela solução do modelo -------
+  (function desenharGrafo() {
+    const svg = document.getElementById("grafo");
+    const ns = "http://www.w3.org/2000/svg";
+    const cores = ["var(--c0)", "var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)", "var(--c6)"];
+    // myciel3: ciclo externo 0-1-2-4-3, internos u_i = 5+i, centro 10
+    const ordem = [0, 1, 2, 4, 3], pos = {};
+    ordem.forEach((v, k) => {
+      const a = -Math.PI / 2 + k * 2 * Math.PI / 5;
+      pos[v] = [210 + 180 * Math.cos(a), 210 + 180 * Math.sin(a)];
+      pos[v + 5] = [210 + 90 * Math.cos(a), 210 + 90 * Math.sin(a)];
+    });
+    pos[10] = [210, 210];
+    RES.arestas3.forEach(([u, v]) => {
+      const l = document.createElementNS(ns, "line");
+      l.setAttribute("x1", pos[u][0]); l.setAttribute("y1", pos[u][1]);
+      l.setAttribute("x2", pos[v][0]); l.setAttribute("y2", pos[v][1]);
+      l.setAttribute("stroke", "#3b475e"); l.setAttribute("stroke-width", "2.5");
+      svg.appendChild(l);
+    });
+    RES.coloracao3.forEach((c, v) => {
+      const g = document.createElementNS(ns, "circle");
+      g.setAttribute("cx", pos[v][0]); g.setAttribute("cy", pos[v][1]); g.setAttribute("r", 19);
+      g.setAttribute("fill", cores[c]); g.setAttribute("stroke", "#0f1420"); g.setAttribute("stroke-width", "4");
+      svg.appendChild(g);
+    });
+  })();
+
+  // ------- barras em escala log -------
+  function barras(id, valores, fmt, max) {
+    const el = document.getElementById(id);
+    const nomes = ["myciel3", "myciel4", "myciel5"], cor = ["var(--ok)", "var(--c3)", "var(--c0)"];
+    valores.forEach((v, i) => {
+      const w = Math.max(3, Math.log10(Math.max(v, 0.01) * 100) / Math.log10(max * 100) * 100);
+      el.insertAdjacentHTML("beforeend",
+        `<div class="bar-row"><span>${nomes[i]}</span><div class="bar-track"><div class="bar" style="width:${w}%;background:${cor[i]}"></div></div><span class="bar-val">${fmt(v)}</span></div>`);
+    });
+  }
+  barras("barsTempo", RES.tempos, v => v.toLocaleString("pt-BR") + " s", Math.max(...RES.tempos));
+  barras("barsNos", RES.nos, v => v.toLocaleString("pt-BR"), Math.max(...RES.nos));
+
+  // ------- navegação -------
+  const slides = [...document.querySelectorAll(".slide")];
+  const notes = document.getElementById("notes");
+  let atual = 0;
+  slides.forEach((s, i) => {
+    s.insertAdjacentHTML("beforeend", `<div class="presenter">${s.dataset.presenter}</div><div class="num">${i + 1} / ${slides.length}</div>`);
+  });
+  function escala() {
+    const k = Math.min(innerWidth / 1280, innerHeight / 720);
+    document.documentElement.style.setProperty("--scale", `scale(${k})`);
+    slides.forEach(s => s.style.transform = `scale(${k})`);
+  }
+  function ir(i) {
+    atual = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, j) => s.classList.toggle("active", j === atual));
+    notes.textContent = `[${slides[atual].dataset.presenter}] ` + (slides[atual].dataset.notes || "");
+    document.getElementById("progress").style.width = ((atual + 1) / slides.length * 100) + "%";
+    location.hash = atual + 1;
+  }
+  addEventListener("keydown", e => {
+    if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) ir(atual + 1);
+    else if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) ir(atual - 1);
+    else if (e.key === "Home") ir(0);
+    else if (e.key === "End") ir(slides.length - 1);
+    else if (e.key.toLowerCase() === "n") document.body.classList.toggle("show-notes");
+    else if (e.key.toLowerCase() === "f") document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+  });
+  addEventListener("click", e => { if (!e.target.closest(".notes")) ir(atual + (e.clientX > innerWidth / 3 ? 1 : -1)); });
+  addEventListener("resize", escala);
+  escala();
+  ir((parseInt(location.hash.slice(1)) || 1) - 1);
+</script>
+</body>
+</html>

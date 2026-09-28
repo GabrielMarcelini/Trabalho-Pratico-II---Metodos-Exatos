@@ -1,0 +1,53 @@
+
+=== myciel3 (Fácil) ===
+  instancia           : myciel3
+  dificuldade         : Fácil
+  vertices            : 11
+  arestas             : 20
+  cores_oferecidas_K  : 4
+  variaveis           : 48
+  restricoes          : 94
+  relaxacao_linear    : 2.0
+  limite_inferior     : 4.0
+  cores_encontradas   : 4
+  chi_literatura      : 4
+  status              : Ótimo
+  gap_%               : 0.0
+  nos_bb              : 93
+  tempo_s             : 0.08
+
+=== myciel4 (Média) ===
+  instancia           : myciel4
+  dificuldade         : Média
+  vertices            : 23
+  arestas             : 71
+  cores_oferecidas_K  : 5
+  variaveis           : 120
+  restricoes          : 382
+  relaxacao_linear    : 2.0
+  limite_inferior     : 5.0
+  cores_encontradas   : 5
+  chi_literatura      : 5
+  status              : Ótimo
+  gap_%               : 0.0
+  nos_bb              : 21990
+  tempo_s             : 12.03
+
+=== myciel5 (Difícil) ===
+  instancia           : myciel5
+  dificuldade         : Difícil
+  vertices            : 47
+  arestas             : 236
+  cores_oferecidas_K  : 6
+  variaveis           : 288
+  restricoes          : 1468
+  relaxacao_linear    : 2.0
+  limite_inferior     : 4.0
+  cores_encontradas   : 6
+  chi_literatura      : 6
+  status              : Limite de tempo
+  gap_%               : 33.33
+  nos_bb              : 157269
+  tempo_s             : 300.03
+
+Resultados salvos em resultados.csv e resultados.json
